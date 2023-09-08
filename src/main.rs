@@ -1,4 +1,4 @@
-use std::{str::FromStr, cell::RefCell};
+use std::{cell::RefCell, str::FromStr};
 
 use i3ipc::{
     event::BindingEventInfo,
@@ -32,7 +32,6 @@ impl FromStr for I3Split {
     }
 }
 
-
 thread_local! {
     static PREVIOUS_SPLIT: RefCell<I3Split> = RefCell::new(I3Split::Horizontal);
 }
@@ -64,7 +63,7 @@ fn set_layout(i3: &mut I3Connection) -> Option<()> {
         if node.nodes.iter().any(|n| n.focused) {
             Some(node)
         } else {
-            node.nodes.iter().find_map(|n| find_focused_parent(n))
+            node.nodes.iter().find_map(find_focused_parent)
         }
     }
 
@@ -94,7 +93,7 @@ fn set_layout(i3: &mut I3Connection) -> Option<()> {
 }
 
 fn handle_keybind(i3: &mut I3Connection, e: BindingEventInfo) -> Option<()> {
-    let mut binding = e.binding.command.split(" ");
+    let mut binding = e.binding.command.split(' ');
     match binding.next()? {
         "split" => print_status(binding.next()?.parse().ok()?),
         "move" | "focus" | "workspace" => set_layout(i3)?,
@@ -109,7 +108,7 @@ fn handle_keybind(i3: &mut I3Connection, e: BindingEventInfo) -> Option<()> {
 
             print_status(split.parse().ok()?)
         }
-        _ => {},
+        _ => {}
     }
 
     Some(())
@@ -127,12 +126,12 @@ fn print_status(split: I3Split) {
             *prev.borrow_mut() = I3Split::Horizontal;
             println!("→")
         }),
-        I3Split::Toggle => PREVIOUS_SPLIT.with(|prev|
+        I3Split::Toggle => PREVIOUS_SPLIT.with(|prev| {
             if *prev.borrow() == I3Split::Vertical {
                 print_status(I3Split::Horizontal)
-            } else if  *prev.borrow() == I3Split::Horizontal {
+            } else if *prev.borrow() == I3Split::Horizontal {
                 print_status(I3Split::Vertical)
             }
-        ),
+        }),
     }
 }
